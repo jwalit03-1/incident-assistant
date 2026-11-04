@@ -15,9 +15,10 @@ import agent  # noqa: E402
 
 log = logging.getLogger("incident-assistant")
 ACCESS_KEY = os.getenv("ACCESS_KEY", "")
+ORIGINS = [o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+ORIGIN_REGEX = os.getenv("CORS_ORIGIN_REGEX") or None  # e.g. https://incident-assistant-.*\.vercel\.app
 app = FastAPI(title="Incident resolution assistant")
-app.add_middleware(CORSMiddleware,
-                   allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173").split(","),
+app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_origin_regex=ORIGIN_REGEX,
                    allow_methods=["POST", "GET"], allow_headers=["Content-Type", "X-Access-Key"])
 
 
@@ -33,7 +34,7 @@ class ChatIn(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "cors_origins": ORIGINS, "cors_origin_regex": ORIGIN_REGEX}
 
 
 @app.post("/api/chat")

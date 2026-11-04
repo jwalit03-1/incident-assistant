@@ -2,6 +2,7 @@ import os, sys, json, types
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("OPENROUTER_API_KEY", "x")
 os.environ["ACCESS_KEY"] = "s3cret"
+os.environ["CORS_ORIGINS"] = "https://app.vercel.app/ , https://other.vercel.app"
 from fastapi.testclient import TestClient
 import main, agent
 
@@ -32,3 +33,12 @@ def test_agent_is_stateless_and_redacts_history(monkeypatch):
                       {"role": "assistant", "content": "ok"}], "next question")
     assert "a@b.com" not in sent[0] and "[EMAIL]" in sent[0] and "orphan" not in sent[0]
     assert out["reply"] == "done"
+
+
+def test_cors_preflight_and_health():
+    c = TestClient(main.app)
+    h = {"Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type,x-access-key"}
+    ok = c.options("/api/chat", headers={"Origin": "https://app.vercel.app", **h})
+    assert ok.status_code == 200 and ok.headers["access-control-allow-origin"] == "https://app.vercel.app"
+    assert c.options("/api/chat", headers={"Origin": "https://evil.example", **h}).status_code == 400
+    assert c.get("/api/health").json()["cors_origins"] == ["https://app.vercel.app", "https://other.vercel.app"]

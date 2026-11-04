@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+const API_BASE = (import.meta.env.VITE_API_BASE || "").trim().replace(/\/+$/, "");
+
 const EXAMPLES = [
   "VPN keeps dropping after the Windows update",
   "Outlook stopped syncing new mail",
@@ -24,7 +26,7 @@ export default function App() {
     setInput("");
     setBusy(true);
     try {
-      const r = await fetch(`${import.meta.env.VITE_API_BASE || ""}/api/chat`, {
+      const r = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Access-Key": key },
         body: JSON.stringify({
