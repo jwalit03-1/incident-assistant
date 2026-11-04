@@ -24,7 +24,7 @@ export default function App() {
     setInput("");
     setBusy(true);
     try {
-      const r = await fetch("/api/chat", {
+      const r = await fetch(`${import.meta.env.VITE_API_BASE || ""}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Access-Key": key },
         body: JSON.stringify({

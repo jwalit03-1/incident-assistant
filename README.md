@@ -31,9 +31,12 @@ Regex detection is not perfect (free-text names/addresses especially), sessions 
 and basic auth is for a PDI prototype only. Use OAuth, a shared session store and a DPIA before real data.
 
 ## Deploy to Vercel (two projects from one repo)
-1. **Backend**: import the repo, set Root Directory to `backend`, add the env vars from `.env.example`
-   (including `ACCESS_KEY`; the API refuses to run on Vercel without it). Check `/api/health`.
-2. **Frontend**: second project, Root Directory `frontend`. In `frontend/vercel.json` replace
-   `YOUR-BACKEND.vercel.app` with the backend URL, then deploy.
-3. Open the site, send a message, and enter the access key when asked.
-The backend is stateless: the browser sends prior turns with each request, so it works on serverless.
+1. **Backend**: import the repo, Root Directory `backend`, add the env vars from `backend/.env.example`
+   (including `ACCESS_KEY`; the API refuses to run on Vercel without it) and
+   `CORS_ORIGINS=https://YOUR-FRONTEND-DOMAIN`. Turn off Deployment Protection for this project.
+   Verify `https://YOUR-BACKEND-DOMAIN/api/health` returns `{"ok":true}`.
+2. **Frontend**: second project, Root Directory `frontend`, env var `VITE_API_BASE=https://YOUR-BACKEND-DOMAIN`
+   (no trailing slash). Vite bakes it in at build time, so redeploy after changing it.
+3. Open the frontend, send a message, and enter the access key when asked.
+The frontend is static, so it has no `/api/health` of its own; check the backend URL instead.
+The backend is stateless: the browser sends prior turns with each request.
