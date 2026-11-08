@@ -40,3 +40,26 @@ and basic auth is for a PDI prototype only. Use OAuth, a shared session store an
 3. Open the frontend, send a message, and enter the access key when asked.
 The frontend is static, so it has no `/api/health` of its own; check the backend URL instead.
 The backend is stateless: the browser sends prior turns with each request.
+
+## Documentation search (local Markdown)
+Docs live in `backend/docs/<doc_type>/<system>/<page>.md` and ship with the backend deployment.
+Optional front matter: `title, doc_type, system, version, status (current|draft|deprecated), updated, tags`.
+Folders supply `doc_type` and `system` when front matter omits them. Files starting with `_` and `README.md` are skipped.
+Deprecated pages are never returned. Text is split at headings, redacted at load time, and searched by keyword.
+- `DOCS_PATH` overrides the folder; `DOCS_BASE_URL` makes results link to your Git host (for example a GitHub blob URL).
+- Add or edit a page, push, and Vercel redeploys with the new content.
+- `/api/health` shows `docs.files` and `docs.chunks`; if they are 0 on Vercel the docs folder was not bundled.
+- The sample pages are fictional; replace them with your own.
+
+### Sample documentation set (api-backend)
+`backend/docs/` contains a fictional Orders API documentation set to demo and to copy as a pattern:
+```
+docs/
+  _CONVENTIONS.md  _TEMPLATE.md            (not indexed; rules and a starter page)
+  technical/api-backend/   architecture-overview, authentication-and-tokens, rest-api-conventions,
+                           rate-limiting, error-codes-reference, database-and-migrations,
+                           configuration-reference, webhooks, deployment-and-environments
+  functional/api-backend/  order-lifecycle, refund-api-behaviour
+  runbooks/api-backend/    high-latency-and-5xx, database-connection-pool-exhausted,
+                           token-validation-failures, webhook-delivery-failures, rollback-a-bad-deploy
+```

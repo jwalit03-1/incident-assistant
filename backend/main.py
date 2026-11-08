@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 import agent  # noqa: E402
+import docs  # noqa: E402
 
 log = logging.getLogger("incident-assistant")
 ACCESS_KEY = os.getenv("ACCESS_KEY", "")
@@ -34,7 +35,7 @@ class ChatIn(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "cors_origins": ORIGINS, "cors_origin_regex": ORIGIN_REGEX}
+    return {"ok": True, "cors_origins": ORIGINS, "cors_origin_regex": ORIGIN_REGEX, "docs": docs.stats()}
 
 
 @app.post("/api/chat")

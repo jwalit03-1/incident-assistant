@@ -32,7 +32,7 @@ def test_agent_is_stateless_and_redacts_history(monkeypatch):
     out = agent.chat([{"role": "assistant", "content": "orphan"}, {"role": "user", "content": "mail a@b.com"},
                       {"role": "assistant", "content": "ok"}], "next question")
     assert "a@b.com" not in sent[0] and "[EMAIL]" in sent[0] and "orphan" not in sent[0]
-    assert out["reply"] == "done"
+    assert out["reply"] == "done" and out["searched"] is False
 
 
 def test_cors_preflight_and_health():
