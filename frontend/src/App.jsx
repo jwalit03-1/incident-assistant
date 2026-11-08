@@ -9,6 +9,7 @@ const P = {
   shield: <><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="M9 12l2 2 4-4" /></>,
   send: <><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4z" /></>,
   out: <path d="M7 17L17 7M8 7h9v9" />,
+  bolt: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
   check: <path d="M20 6L9 17l-5-5" />,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></>,
   wifi: <path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01M2 9a15 15 0 0 1 20 0" />,
@@ -120,6 +121,24 @@ function Sources({ sources }) {
   );
 }
 
+const fmt = (n) => (n ?? 0).toLocaleString();
+
+function Usage({ u }) {
+  if (!u) return null;
+  if (!u.reported && !u.total) {
+    return <div className="tok"><Icon n="bolt" size={14} /><span>Token usage was not reported by this model.</span></div>;
+  }
+  return (
+    <div className="tok">
+      <Icon n="bolt" size={14} />
+      <span>Input <b>{fmt(u.input)}</b></span>
+      <span>Output <b>{fmt(u.output)}</b></span>
+      <span>Total <b>{fmt(u.total)}</b></span>
+      <span>{u.requests} model request{u.requests === 1 ? "" : "s"}{u.reported ? "" : " (some not reported)"}</span>
+    </div>
+  );
+}
+
 export default function App() {
   const [key, setKey] = useState(() => sessionStorage.getItem("ak") || "");
   const [needKey, setNeedKey] = useState(false);
@@ -129,6 +148,10 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const end = useRef(null);
   const ta = useRef(null);
+
+  const session = msgs.reduce(
+    (a, m) => (m.usage ? { input: a.input + m.usage.input, output: a.output + m.usage.output, total: a.total + m.usage.total } : a),
+    { input: 0, output: 0, total: 0 });
 
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, busy]);
   useEffect(() => {
@@ -157,7 +180,7 @@ export default function App() {
         throw new Error(e.detail || `Request failed (${r.status})`);
       }
       const d = await r.json();
-      setMsgs((m) => [...m, { role: "assistant", text: d.reply, sources: d.sources, redactions: d.redactions, searched: d.searched }]);
+      setMsgs((m) => [...m, { role: "assistant", text: d.reply, sources: d.sources, redactions: d.redactions, searched: d.searched, usage: d.usage }]);
     } catch (e) {
       setMsgs((m) => [...m, { role: "error", text: e.message }]);
     } finally {
@@ -175,7 +198,14 @@ export default function App() {
             <p>Past incidents and documentation, with sources</p>
           </div>
         </div>
-        <span className="pill"><Icon n="shield" size={14} />PII filtered</span>
+        <div className="pills">
+          {session.total > 0 && (
+            <span className="pill tokens" title={`Conversation total: ${fmt(session.input)} in, ${fmt(session.output)} out`}>
+              <Icon n="bolt" size={14} />{fmt(session.total)} tokens
+            </span>
+          )}
+          <span className="pill"><Icon n="shield" size={14} />PII filtered</span>
+        </div>
       </header>
 
       <main>
@@ -209,6 +239,7 @@ export default function App() {
                 <RichText text={m.text} />
                 <Provenance m={m} />
                 <Sources sources={m.sources} />
+                <Usage u={m.usage} />
                 {m.redactions && Object.keys(m.redactions).length > 0 && (
                   <div className="priv">
                     <Icon n="shield" size={14} />

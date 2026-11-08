@@ -42,3 +42,28 @@ def test_cors_preflight_and_health():
     assert ok.status_code == 200 and ok.headers["access-control-allow-origin"] == "https://app.vercel.app"
     assert c.options("/api/chat", headers={"Origin": "https://evil.example", **h}).status_code == 400
     assert c.get("/api/health").json()["cors_origins"] == ["https://app.vercel.app", "https://other.vercel.app"]
+
+
+def test_token_usage_is_summed_across_requests(monkeypatch):
+    calls = []
+    def fake_create(**kw):
+        calls.append(1)
+        usage = types.SimpleNamespace(prompt_tokens=100 * len(calls), completion_tokens=7)
+        if len(calls) == 1:
+            tc = types.SimpleNamespace(id="c1", function=types.SimpleNamespace(
+                name="get_doc", arguments=json.dumps({"path": "nope.md"})))
+            m = types.SimpleNamespace(content=None, tool_calls=[tc])
+        else:
+            m = types.SimpleNamespace(content="done", tool_calls=None)
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(message=m)], usage=usage)
+    monkeypatch.setattr(agent.client.chat.completions, "create", fake_create)
+    out = agent.chat([], "hi")
+    assert out["usage"] == {"input": 300, "output": 14, "requests": 2, "reported": True, "total": 314}
+
+
+def test_missing_usage_is_flagged(monkeypatch):
+    def fake_create(**kw):
+        m = types.SimpleNamespace(content="done", tool_calls=None)
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(message=m)])
+    monkeypatch.setattr(agent.client.chat.completions, "create", fake_create)
+    assert agent.chat([], "hi")["usage"]["reported"] is False

@@ -105,6 +105,7 @@ def chat(prior: list[dict], user_message: str) -> dict:
     history.append({"role": "user", "content": message})
     sources: dict[str, dict] = {}
     searched = False
+    usage = {"input": 0, "output": 0, "requests": 0, "reported": True}
     text = ""
 
     for _ in range(MAX_STEPS):
@@ -112,6 +113,13 @@ def chat(prior: list[dict], user_message: str) -> dict:
             model=MODEL, max_tokens=1200, tools=TOOLS,
             messages=[{"role": "system", "content": SYSTEM}] + history)
         msg = resp.choices[0].message
+        usage["requests"] += 1
+        u = getattr(resp, "usage", None)
+        if u:
+            usage["input"] += getattr(u, "prompt_tokens", 0) or 0
+            usage["output"] += getattr(u, "completion_tokens", 0) or 0
+        else:
+            usage["reported"] = False
         entry = {"role": "assistant", "content": msg.content or ""}
         if msg.tool_calls:
             entry["tool_calls"] = [
@@ -138,4 +146,5 @@ def chat(prior: list[dict], user_message: str) -> dict:
     text = text or "I couldn't finish that lookup. Please try again."
     text, c = redact(text)  # final output check
     counts.update(c)
-    return {"reply": text, "sources": list(sources.values()), "redactions": dict(counts), "searched": searched}
+    return {"reply": text, "sources": list(sources.values()), "redactions": dict(counts), "searched": searched,
+            "usage": {**usage, "total": usage["input"] + usage["output"]}}

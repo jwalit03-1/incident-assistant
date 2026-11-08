@@ -63,3 +63,6 @@ docs/
   runbooks/api-backend/    high-latency-and-5xx, database-connection-pool-exhausted,
                            token-validation-failures, webhook-delivery-failures, rollback-a-bad-deploy
 ```
+
+## Token usage
+Each reply shows input, output and total tokens summed over all model requests for that question, and the header shows the conversation total. Values come from the provider's `usage` field via OpenRouter; if a model does not report it, the UI says so.

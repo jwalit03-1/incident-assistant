@@ -114,7 +114,11 @@ textarea { flex: 1; font: inherit; color: var(--ink); background: transparent; b
 @media (max-width: 600px) {
   .examples { grid-template-columns: 1fr; }
   .hero h2 { font-size: 1.6rem; }
-  .pill { display: none; }
+  .pill:not(.tokens) { display: none; }
   .bubble { max-width: 90%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+.pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pill.tokens { color: var(--none-ink); background: var(--none-bg); border-color: var(--none-line); font-variant-numeric: tabular-nums; }
+.tok { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 12px; font-size: .78rem; color: var(--dim); }
+.tok b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
